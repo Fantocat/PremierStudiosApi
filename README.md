@@ -23,7 +23,6 @@ PremierStudioApi is a backend system for managing events, allowing users to crea
 
 ### 🔐 Authentication
 - **POST** `/api/auth/login` → Authenticate a user and return a JWT token.
-- **POST** `/api/auth/logout` → Log out the authenticated user.
 
 ---
 
