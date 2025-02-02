@@ -45,7 +45,7 @@ spring.jpa.hibernate.ddl-auto=update
 ```
 - Change the JWT secret key in `application.properties`:
 ```properties
-jwt.secret=your_secret_key_here
+jwt.secret.key=your_secret_key_here
 ```
 
 ### Install Dependencies & Run the Application
