@@ -30,7 +30,7 @@ public class EventValidator {
     private LocalDate date;
 
     @NotNull(message = "Time cannot be null")
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     @Schema(type = "string", example = "14:30")
     private LocalTime time;
 

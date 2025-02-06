@@ -19,7 +19,8 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    @Operation(summary = "User login", description = "Authenticate a user and return a JWT token.")
+    @Operation(summary = "User login", 
+    description = "Authenticate a user and return a JWT token.")
     public ResponseEntity<ApiResponse<String>> login(LoginRequest login){
         ApiResponse<String> response = userService.dologin(login);
         return ResponseEntity.status(response.getStatusCode()).body(response);

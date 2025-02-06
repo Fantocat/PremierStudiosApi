@@ -40,15 +40,15 @@ public class EventService {
         }
     }
 
-    public ApiResponse<String> updateEvent(Long id, Event event) {
-        Optional<Event> existingEvent = eventRepo.findById(id);
-        if (existingEvent.isEmpty()) {
-            throw new ResourceNotFoundException("Event not found with id: " + id);
-        }
-
+    public ApiResponse<String> updateEvent(Long id, EventValidator event) {
+        Event event2 = eventRepo.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
         try {
-            event.setId(id);
-            eventRepo.save(event);
+            event2.setName(event.getName());
+            event2.setDate(event.getDate());
+            event2.setTime(event.getTime());
+            event2.setDescription(event.getDescription());
+            event2.setLocation(event.getLocation());
             return new ApiResponse<>(true, 200, "Event updated successfully", null);
         } catch (Exception e) {
             throw new InternalServerErrorException("Failed to update the event due to a database error.");
@@ -87,7 +87,9 @@ public class EventService {
         try {
             Event event = getEvent(id);
             return new ApiResponse<>(true, 200, "Event fetched successfully", event);
-        } catch (Exception e) {
+        }  catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("Event not found with id: " + id);
+        }  catch (Exception e) {
             throw new InternalServerErrorException("Failed to fetch events due to a database error.");
         }
     }

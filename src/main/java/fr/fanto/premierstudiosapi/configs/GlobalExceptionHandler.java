@@ -3,12 +3,12 @@ package fr.fanto.premierstudiosapi.configs;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import fr.fanto.premierstudiosapi.exceptions.InternalServerErrorException;
 import fr.fanto.premierstudiosapi.exceptions.ResourceNotFoundException;
@@ -16,11 +16,91 @@ import fr.fanto.premierstudiosapi.exceptions.UserAlreadyExistsException;
 import fr.fanto.premierstudiosapi.models.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    
+    @ExceptionHandler(ConstraintViolationException.class)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400",
+        description = "Validation Error",
+        content = @Content(
+            mediaType = "application/json",
+            examples = {
+                @ExampleObject(
+                    name = "Validation Error",
+                    value = "{\n" +
+                            "  \"success\": false,\n" +
+                            "  \"statusCode\": 400,\n" +
+                            "  \"message\": \"Validation Error\",\n" +
+                            "  \"data\": null\n" +
+                            "}"
+                )
+            }
+        )
+    )
+    public ResponseEntity<ApiResponse<Object>> handleValidationException(ConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        
+        ex.getConstraintViolations().forEach(violation -> {
+            String fieldName = violation.getPropertyPath().toString();
+            String errorMessage = violation.getMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        ApiResponse<Object> response = new ApiResponse<>(false, 400, "Validation Error", errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+
+    @ExceptionHandler(AuthenticationException.class)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized",
+        content = @Content(
+            mediaType = "application/json",
+            examples = {
+                @ExampleObject(
+                    name = "Unauthorized",
+                    value = "{\n" +
+                            "  \"success\": false,\n" +
+                            "  \"statusCode\": 401,\n" +
+                            "  \"message\": \"Unauthorized\",\n" +
+                            "  \"data\": null\n" +
+                            "}"
+                )
+            }
+        )
+    )
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorizedException(AuthenticationException ex) {
+        ApiResponse<Object> response = new ApiResponse<>(false, 401, "Unauthorized - Invalid or missing authentication credentials", null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "403",
+        description = "Access Denied",
+        content = @Content(
+            mediaType = "application/json",
+            examples = {
+                @ExampleObject(
+                    name = "Access Denied",
+                    value = "{\n" +
+                            "  \"success\": false,\n" +
+                            "  \"statusCode\": 403,\n" +
+                            "  \"message\": \"Access Denied\",\n" +
+                            "  \"data\": null\n" +
+                            "}"
+                )
+            }
+        )
+    )
+    public ResponseEntity<ApiResponse<Object>> handleForbiddenException(AccessDeniedException ex) {
+        ApiResponse<Object> response = new ApiResponse<>(false, 403, "Forbidden - Insufficient permissions", null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
 
     @ExceptionHandler(InternalServerErrorException.class)
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -65,7 +145,7 @@ public class GlobalExceptionHandler {
             }
         )
     )
-    public ResponseEntity<ApiResponse<Object>> handleUserAlreadyExistsException(InternalServerErrorException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
         ApiResponse<Object> response = new ApiResponse<>(false, 409, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
@@ -92,37 +172,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         ApiResponse<Object> response = new ApiResponse<>(false, 404, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "400",
-        description = "Validation error: The request contains invalid or missing fields",
-        content = @Content(
-            mediaType = "application/json",
-            examples = {
-                @ExampleObject(
-                    name = "Validation Error Example",
-                    value = "{\n" +
-                            "  \"success\": false,\n" +
-                            "  \"statusCode\": 400,\n" +
-                            "  \"message\": \"Validation failed: Some fields are incorrect\",\n" +
-                            "  \"errors\": {\n" +
-                            "    \"email\": \"Email is required\",\n" +
-                            "    \"password\": \"Password must be at least 8 characters long\"\n" +
-                            "  }\n" +
-                            "}"
-                )
-            }
-        )
-    )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Erreur de validation des données d'entrée")
-    public Map<String, String> handleValidationException(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> 
-            errors.put(error.getField(), error.getDefaultMessage())
-        );
-        return errors;
     }
 }

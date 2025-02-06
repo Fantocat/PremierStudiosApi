@@ -24,7 +24,6 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -52,7 +51,7 @@ public class EventController {
     @Operation(summary = "Update an event", description = "Updates an event by its ID")
     public ResponseEntity<ApiResponse<String>> updateEvent(
             @PathVariable Long id, 
-            @RequestBody Event event) {
+            @Validated @org.springframework.web.bind.annotation.RequestBody EventValidator event) {
         ApiResponse<String> response = eventService.updateEvent(id, event);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

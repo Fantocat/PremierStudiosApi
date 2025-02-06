@@ -74,12 +74,15 @@ PremierStudioApi/
 │── src/
 │   ├── main/
 │   │   ├── java/com/premierstudio/
+│   │   │   ├── configs/
 │   │   │   ├── controllers/
+│   │   │   ├── entities/
+│   │   │   ├── exceptions/
 │   │   │   ├── models/
 │   │   │   ├── repositories/
-│   │   │   ├── security/
 │   │   │   ├── services/
-│   │   │   ├── config/
+│   │   │   ├── utils/
+│   │   │   ├── validator/
 │   ├── resources/
 │   │   ├── application.properties
 │── build.gradle
