@@ -2,6 +2,7 @@ package fr.fanto.premierstudiosapi.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import fr.fanto.premierstudiosapi.entities.Event;
@@ -25,7 +26,7 @@ public class EventService {
 
     private final EventRepo eventRepo;
 
-    public void createEvent(EventValidator eventValidator) {
+    public void createEvent(EventValidator eventValidator, User user) {
         try {
             Event event = Event.builder()
                             .name(eventValidator.getName())
@@ -33,6 +34,7 @@ public class EventService {
                             .date(eventValidator.getDate())
                             .description(eventValidator.getDescription())
                             .time(eventValidator.getTime())
+                            .createdBy(user)
                             .build();
             eventRepo.save(event);
         } catch (Exception e) {
@@ -40,9 +42,11 @@ public class EventService {
         }
     }
 
-    public ApiResponse<String> updateEvent(Long id, EventValidator event) {
+    public ApiResponse<String> updateEvent(Long id, EventValidator event, User user) {
         Event event2 = eventRepo.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+        if (!isOwner(event2, user))
+            throw new AccessDeniedException("You are not the owner");
         try {
             event2.setName(event.getName());
             event2.setDate(event.getDate());
@@ -55,12 +59,11 @@ public class EventService {
         }
     }
 
-    public ApiResponse<String> deleteEvent(Long id) {
-        Optional<Event> existingEvent = eventRepo.findById(id);
-        if (existingEvent.isEmpty()) {
-            throw new ResourceNotFoundException("Event not found with id: " + id);
-        }
-
+    public ApiResponse<String> deleteEvent(Long id, User user) {
+        Event event2 = eventRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+        if (!isOwner(event2, user))
+            throw new AccessDeniedException("You are not the owner");
         try {
             eventRepo.deleteById(id);
             return new ApiResponse<>(true, 200, "Event deleted successfully", null);
@@ -94,12 +97,14 @@ public class EventService {
         }
     }
 
-    public ApiResponse<Iterable<Attendees>> getAttendees(Long id) {
+    public ApiResponse<Iterable<Attendees>> getAttendees(Long id, User user) {
+        Event event = eventRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+        if (!isOwner(event, user))
+            throw new AccessDeniedException("You are not the owner");
         try {
-            Event event = getEvent(id);
-
             List<Attendees> attendeesList = event.getUsers().stream()
-                .map(user -> new Attendees(user.getEmail(), user.getUsername()))
+                .map(attendees -> new Attendees(attendees.getEmail(), attendees.getUsername()))
                 .collect(Collectors.toList());
 
             return new ApiResponse<>(true, 200, "Attendees fetched successfully", attendeesList);
@@ -116,7 +121,7 @@ public class EventService {
         }
     }
 
-    public ApiResponse<String> register(Long id, User user){
+    public ApiResponse<String> register(Long id, User user) {
         Event event = eventRepo.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
         event.getUsers().add(user);
@@ -126,5 +131,11 @@ public class EventService {
         } catch (Exception e){
             throw new InternalServerErrorException("Failed to add user to event due to a database error.");
         }
+    }
+
+    public boolean isOwner(Event event, User user) {
+        String ownerId = event.getCreatedBy().getEmail();
+        String userId = user.getEmail();
+        return ownerId.equals(userId);
     }
 }

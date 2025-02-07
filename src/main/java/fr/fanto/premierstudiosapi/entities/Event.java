@@ -39,4 +39,7 @@ public class Event {
 
     @ManyToMany
     private List<User> users;
+
+    @ManyToOne
+    private User createdBy;
 }

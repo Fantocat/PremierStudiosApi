@@ -42,7 +42,8 @@ public class EventController {
             @Validated 
             @org.springframework.web.bind.annotation.RequestBody 
             EventValidator event) {
-        eventService.createEvent(event);
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); 
+        eventService.createEvent(event, user);
         return ResponseEntity.ok(new ApiResponse<>(true, 200, "Event created successfully", null));
     }
 
@@ -52,7 +53,8 @@ public class EventController {
     public ResponseEntity<ApiResponse<String>> updateEvent(
             @PathVariable Long id, 
             @Validated @org.springframework.web.bind.annotation.RequestBody EventValidator event) {
-        ApiResponse<String> response = eventService.updateEvent(id, event);
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); 
+        ApiResponse<String> response = eventService.updateEvent(id, event, user);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
@@ -60,7 +62,8 @@ public class EventController {
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete an event", description = "Deletes an event by its ID")
     public ResponseEntity<ApiResponse<String>> deleteEvent(@PathVariable Long id) {
-        ApiResponse<String> response = eventService.deleteEvent(id);
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); 
+        ApiResponse<String> response = eventService.deleteEvent(id, user);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
@@ -86,7 +89,8 @@ public class EventController {
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Get attendees of an event", description = "Retrieves attendees for a specific event")
     public ResponseEntity<ApiResponse<Iterable<Attendees>>> getAttendees(@PathVariable Long id) {
-        ApiResponse<Iterable<Attendees>> reponse = eventService.getAttendees(id);
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); 
+        ApiResponse<Iterable<Attendees>> reponse = eventService.getAttendees(id, user);
         return ResponseEntity.status(reponse.getStatusCode()).body(reponse);
     }
 
